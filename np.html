@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Taking App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #e3c9f1;
+            transition: all 2s ease-in;
+        }
+        .note-card {
+            margin-bottom: 20px;
+        }
+        .note-card .card-body {
+            position: relative;
+        }
+        .note-card .card-body .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #ff6b6b;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+        .note-card .card-body .delete-btn:hover {
+            color: #ff4040;
+            transform: scale(1.1);
+        }
+        .note-card .card-body .edit-btn {
+            position: absolute;
+            top: 10px;
+            right: 40px;
+            color: #85b5dc;
+            cursor: pointer;
+        }
+        .note-colors .btn {
+            margin-right: 10px;
+        }
+        .floating-menu {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .floating-menu .btn {
+            margin-bottom: 10px;
+        }
+        .btn-pastel-blue {
+            background-color: #a7c7e7;
+            color: #fff;
+        }
+        .btn-pastel-green {
+            background-color: #a8e6cf;
+            color: #fff;
+        }
+        .btn-pastel-yellow {
+            background-color: #ece176;
+            color: #fff;
+        }
+        .btn-pastel-red {
+            background-color: #ff8a80;
+            color: #fff;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            bottom: 60px;
+            right: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .dropdown-menu.show {
+            display: block;
+        }
+        .dropdown-menu .btn {
+            width: 100%;
+            border-radius: 0;
+        }
+        .welcome-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            font-family: papyrus;
+        }
+        .main-content {
+            display: none;
+            transition: all ease-in;
+        }
+        .add-note-btn {
+            display: none; /* Initially hidden */
+            background-color: #6c757d; /* Dark pastel color */
+            color: white;
+            border-radius: 20px;
+            margin-top: 20px; /* Add some margin for spacing */
+        }
+        .centered {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .search-container {
+            position: relative;
+            margin-bottom: 20px; /* Space below the search bar */
+        }
+        .search-container input {
+            padding-left: 40px; /* Space for the icon */
+        }
+        .search-container .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-content animate__animated animate__fadeIn">
+            <h1 class="text-center">What would you like to do today?</h1>
+            <p class="text-center mt-3">Click anywhere to begin</p>
+            <div class="pulse-circle animate__animated animate__pulse animate__infinite"></div>
+        </div>
+    </div>
+
+    <div class="container mt-5 main-content" id="mainContent">
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchBar" class="form-control" placeholder="Search Notes" oninput="searchNotes()" />
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4" id="notesContainer">
+            <!-- Notes will be appended here -->
+        </div>
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+               <div id="noteInputSection" class="mb-3 glass-card" style="display: none;">
+    <input type="text" id="noteTitle" class="form-control mb-3" placeholder="Note Title" />
+    <textarea id="noteText" class="form-control" rows="5" placeholder="Start typing your note here..."></textarea>
+    <div class="word-counter">0 words</div>
+</div>
+<div id="imageInputSection" class="mb-3" style="display: none;">
+    <input type="file" id="noteImage" class="form-control">
+    <input type="text" id="photoCaption" class="form-control mt-2" placeholder="Optional Caption for Photo">
+</div>
+
+                <div id="imageInputSection" class="mb-3" style="display: none;">
+                    <input type="file" id="noteImage" class="form-control">
+                </div>
+                <div id="todoInputSection" class="mb-3" style="display: none;">
+                    <input type="text" id="todoItem" class="form-control" placeholder="Add to list" 
+                           onkeydown="if(event.key === 'Enter') addTodoItem()">
+                    <button class="btn btn-secondary mt-2" onclick="addTodoItem()">Add To-Do Item</button>
+                    <ul id="todoList" class="list-group mt-2"></ul>
+                </div>
+                <div id="reminderInputSection" class="mb-3" style="display: none;">
+                    <input type="text" id="reminderName" class="form-control mb-2" placeholder="Reminder Name" 
+                           onkeydown="if(event.key === 'Enter') addNote()">
+                    <input type="datetime-local" id="reminder" class="form-control mb-2">
+                    <select id="alarmSound" class="form-control">
+                        <option value="default">Default Alarm</option>
+                        <option value="chime">Chime</option>
+                        <option value="alert">Alert</option>
+                    </select>
+                </div>
+                <div class="note-colors mb-3" style="display: none;">
+                    <button class="btn btn-pastel-blue" onclick="setNoteColor('#a7c7e7')">Blue</button>
+                    <button class="btn btn-pastel-green" onclick="setNoteColor('#a8e6cf')">Green</button>
+                    <button class="btn btn-pastel-yellow" onclick="setNoteColor('#ffeb3b')">Yellow</button>
+                    <button class="btn btn-pastel-red" onclick="setNoteColor('#ff8a80')">Red</button>
+                </div>
+                <div class="d-grid" style="display: none;">
+                    <button class="btn add-note-btn" id="addNoteButton" onclick="addNote()">Add Note</button>
+                </div>
+                </div>
+        </div>
+    </div>
+
+    <div class="floating-menu" id="floatingMenu" style="display: none;">
+        <button class="fab-button fab-main animate__animated animate__fadeIn" onclick="toggleDropdown()">
+            <span class="material-symbols-outlined">Create Note</span>
+        </button>
+        <div class="fab-tooltip animate__animated animate__fadeIn"></div>
+        <div class="dropdown-menu" id="dropdownMenu">
+    <button class="btn btn-pastel-blue" onclick="showNoteInput()">Add Note</button>
+    <button class="btn btn-pastel-green" onclick="showImageInput()">Add Picture Note</button>
+    <button class="btn btn-pastel-yellow" onclick="showTodoInput()">Add To-Do List</button>
+    <button class="btn btn-pastel-red" onclick="showReminderInput()">Add Reminder</button>
+    <button class="btn btn-pastel-red" onclick="openCamera()">Open Camera</button>
+</div>
+
+    </div>
+
+    <script>
+        let selectedColor = '#a7c7e7';
+        let todoItems = [];
+
+        document.body.addEventListener('click', function() {
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            const mainContent = document.getElementById('mainContent');
+
+            // Fade out welcome screen
+            welcomeScreen.classList.add('animate__animated', 'animate__fadeOut');
+            setTimeout(() => {
+                welcomeScreen.style.display = 'none';
+                mainContent.style.display = 'block';
+                mainContent.classList.add('animate__animated', 'animate__fadeIn');
+                const menu = document.getElementById('floatingMenu');
+                menu.style.display = 'block';
+                menu.querySelector('.fab-main').classList.add('animate__fadeIn');
+                menu.querySelector('.fab-tooltip').classList.add('animate__fadeIn');
+            }, 1000);
+        });
+
+        function setNoteColor(color) {
+            selectedColor = color;
+        }
+
+        function addTodoItem() {
+            const todoItem = document.getElementById('todoItem').value;
+            if (todoItem.trim() === '') {
+                alert('Please enter a to-do item.');
+                return;
+            }
+            todoItems.push(todoItem);
+            const todoList = document.getElementById('todoList');
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item d-flex align-items-center';
+            listItem.innerHTML = `
+                <input type="checkbox" class="form-check-input me-3" onchange="toggleTodoComplete(this)">
+                <span class="todo-text">${todoItem}</span>
+            `;
+            todoList.appendChild(listItem);
+            document.getElementById('todoItem').value = '';
+        }
+
+        function addNote() {
+            const noteTitle = document.getElementById('noteTitle').value;
+            const noteText = document.getElementById('noteText').value;
+            const noteImage = document.getElementById('noteImage').files[0];
+            const reminderName = document.getElementById('reminderName').value;
+            const reminder = document.getElementById('reminder').value;
+            const alarmSound = document.getElementById('alarmSound').value;
+            const notesContainer = document.getElementById('notesContainer');
+
+            if (noteText.trim() === '' && !noteImage && todoItems.length === 0 && reminderName.trim() === '' && reminder.trim() === '') {
+                alert('Please add some text, an image, a to-do item, or a reminder to your note.');
+                return;
+            }
+
+            const currentDate = new Date().toLocaleString(); // Get current date and time
+            const noteCard = document.createElement('div');
+            noteCard.className = 'col-md-4 mb-4 note-card animate__animated animate__zoomIn animate__faster';
+            setTimeout(() => {
+                noteCard.classList.remove('animate__zoomIn');
+            }, 500);
+            noteCard.innerHTML = `
+                <div class="card" style="background-color: ${selectedColor};">
+                    <div class="card-body">
+                        <span class="edit-btn"><i class="fas fa-edit"></i></span>
+                        <span class="delete-btn" onclick="deleteNote(this)" title="Delete Note">
+                            <i class="fas fa-trash-alt"></i>
+                        </span>
+                        ${noteImage ? `<img src="${URL.createObjectURL(noteImage)}" class="img-fluid mb-2" alt="User  uploaded image">` : ''}
+                        <h5 class="card-title">${noteTitle}</h5>
+                        <p class="card-text">${noteText}</p>
+                        <p class="text-muted">Created on: ${currentDate}</p>
+                        ${todoItems.length > 0 ? `<ul class="list-group mb-2">${todoItems.map(item => `
+                            <li class="list-group-item d-flex align-items-center">
+                                <input type="checkbox" class="form-check-input me-3">
+                                <span>${item}</span>
+                            </li>`).join('')}</ul>` : ''}
+                        ${reminderName ? `<p class="text-muted">Reminder: ${reminderName}</p>` : ''}
+                        ${reminder ? `<p class="text-muted">Time: ${new Date(reminder).toLocaleString()}</p>` : ''}
+                    </div>
+                </div>
+            `;
+            notesContainer.appendChild(noteCard);
+
+            // Reset input fields
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteText').value = '';
+            document.getElementById('noteImage').value = '';
+            document.getElementById('reminderName').value = '';
+            document.getElementById('reminder').value = '';
+            document.getElementById('alarmSound').value = 'default';
+            document.getElementById('todoList').innerHTML = '';
+            todoItems = [];
+            hideAllInputs();
+        }
+
+        function toggleTodoComplete(checkbox) {
+            const todoText = checkbox.nextElementSibling;
+            if (checkbox.checked) {
+                todoText.style.textDecoration = 'line-through';
+                todoText.style.color = '#aaa';
+            } else {
+                todoText.style.textDecoration = 'none';
+                todoText.style.color = 'inherit';
+            }
+        }
+
+        function deleteNote(element) {
+            const card = element.closest('.note-card');
+            card.classList.add('animate__animated', 'animate__zoomOut');
+            setTimeout(() => {
+                card.remove();
+            }, 500);
+        }
+
+        function toggleDropdown() {
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            if (dropdownMenu.classList.contains('show')) {
+                dropdownMenu.classList.add('animate__fadeOutUp');
+                setTimeout(() => {
+                    dropdownMenu.classList.remove('show', 'animate__fadeOutUp');
+                }, 300);
+            } else {
+                dropdownMenu.classList.add('animate__animated', 'animate__fadeInUp', 'show');
+                setTimeout(() => {
+                    dropdownMenu.classList.remove('animate__fadeInUp');
+                }, 500);
+            }
+        }
+
+        function hideAllInputs() {
+            document.getElementById('noteInputSection').style.display = 'none';
+            document.getElementById('imageInputSection').style.display = 'none';
+            document.getElementById('todoInputSection').style.display = 'none';
+            document.getElementById('reminderInputSection').style.display = 'none';
+            document.querySelector('.note-colors').style.display = 'none';
+            document.querySelector('.d-grid').style.display = 'none';
+        }
+
+        function showNoteInput() {
+            hideAllInputs();
+            document.getElementById('noteInputSection').style.display = 'block';
+            document.getElementById('noteText').focus();
+            document.querySelector('.note-colors').style.display = 'block';
+            document.querySelector('.d-grid').style.display = 'block';
+            document.getElementById('addNoteButton').style.display = 'block'; // Show the Add Note button
+            toggleDropdown();
+        }
+
+        function showImageInput() {
+            hideAllInputs();
+            document.getElementById('imageInputSection').style.display = 'block';
+            document.querySelector('.note-colors').style.display = 'block';
+            document.querySelector('.d-grid').style.display = 'block';
+            document.getElementById('addNoteButton').style.display = 'block'; // Show the Add Note button
+            toggleDropdown();
+        }
+
+        function showTodoInput() {
+            hideAllInputs();
+            document.getElementById('todoInputSection').style.display = 'block';
+            document.getElementById('todoItem').focus();
+            document.querySelector('.note-colors').style.display = 'block';
+            document.querySelector('.d-grid').style.display = 'block';
+            document.getElementById('addNoteButton').style.display = 'block'; // Show the Add Note button
+            toggleDropdown();
+        }
+
+        function showReminderInput() {
+            hideAllInputs();
+            document.getElementById('reminderInputSection').style.display = 'block';
+            document.querySelector('.note-colors').style.display = 'block';
+            document.querySelector('.d-grid').style.display = 'block';
+            document.getElementById('addNoteButton').style.display = 'block'; // Show the Add Note button
+            toggleDropdown();
+        }
+
+        function searchNotes() {
+            const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+            const notes = document.querySelectorAll('.note-card');
+            notes.forEach(note => {
+                const title = note.querySelector('.card-title').textContent.toLowerCase();
+                const text = note.querySelector('.card-text').textContent.toLowerCase();
+                const dateText = note.querySelector('.text-muted').textContent.toLowerCase(); // Get the date text
+                if (title.includes(searchTerm) || dateText.includes(searchTerm) || text.includes(searchTerm)) {
+                    note.style.display = 'block';
+                } else {
+                    note.style.display = 'none';
+                }
+            });
+        }
+
+        function startRecording() {
+            // Implement recording functionality here
+            alert('Recording functionality is not implemented yet.');
+        }
+
+           function openCamera() {
+    // Check if the browser supports the mediaDevices API
+    if (navigator.mediaDevices && navigator.mediaDevices.getUser Media) {
+        navigator.mediaDevices.getUser Media({ video: true })
+            .then(function(stream) {
+                // Create a video element to display the camera feed
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.play();
+
+                // Create a button to capture the photo
+                const captureButton = document.createElement('button');
+                captureButton.innerText = 'Capture Photo';
+                document.body.appendChild(video);
+                document.body.appendChild(captureButton);
+
+                // Capture the photo when the button is clicked
+                captureButton.onclick = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Stop the video stream
+                    stream.getTracks().forEach(track => track.stop());
+
+                    // Convert the canvas to a data URL and add it to the note
+                    const photoData = canvas.toDataURL('image/png');
+                    addPhotoToNote(photoData);
+
+                    // Clean up
+                    document.body.removeChild(video);
+                    document.body.removeChild(captureButton);
+                };
+            })
+            .catch(function(error) {
+                console.error("Error accessing the camera: ", error);
+            });
+    } else {
+        alert('Camera not supported in this browser.');
+    }
+}
+
+
+function addPhotoToNote(photoData) {
+    const notesContainer = document.getElementById('notesContainer');
+    const noteCard = document.createElement('div');
+    noteCard.className = 'col-md-4 mb-4 note-card';
+    noteCard.innerHTML = `
+        <div class="card">
+            <div class="card-body">
+                <img src="${photoData}" class="img-fluid mb-2" alt="Captured image">
+                <p class="text-muted">Photo added to your note.</p>
+            </div>
+        </div>
+    `;
+    notesContainer.appendChild(noteCard);
+}
+
+       
+    </script>
+</body
